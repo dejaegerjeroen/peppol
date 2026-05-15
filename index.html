@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peppol: De Digitale Factuur</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0e1a;
+    --paper: #f5f3ee;
+    --blue: #1a3a8f;
+    --blue-light: #2d55c9;
+    --accent: #e8a020;
+    --green: #1a7a4a;
+    --red: #b91c1c;
+    --grid: #ddd8ce;
+    --stamp: #1a3a8f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* Header */
+  .site-header {
+    background: var(--blue);
+    color: white;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: stretch;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+    padding-right: 40px;
+  }
+
+  .header-logo svg { width: 32px; height: 32px; }
+  .header-logo span { font-size: 1.3rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+
+  .header-info {
+    padding: 16px 24px;
+    flex: 1;
+  }
+
+  .header-info h1 { font-size: 1rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+  .header-info p { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin-top: 2px; }
+
+  /* Tab navigation */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 2px solid var(--grid);
+    background: white;
+    color: #666;
+    cursor: pointer;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.15s;
+    position: relative;
+    top: 2px;
+  }
+
+  .tab-btn:hover { background: #eee; color: var(--blue); }
+  .tab-btn.active {
+    background: var(--blue);
+    color: white;
+    border-color: var(--blue);
+  }
+
+  .tab-btn .scenario-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    margin-right: 6px;
+  }
+
+  .tab-btn.active .scenario-num { background: var(--accent); color: var(--ink); }
+
+  /* Main layout */
+  .main-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+  }
+
+  /* Scenario card */
+  .scenario-card {
+    background: white;
+    border: 2px solid var(--blue);
+    border-radius: 0 8px 8px 8px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scenario-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--blue-light));
+  }
+
+  .scenario-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--blue);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 3px;
+    margin-bottom: 12px;
+  }
+
+  .scenario-title { font-size: 1.15rem; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+
+  .scenario-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #333;
+    background: #f8f7f4;
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 16px;
+  }
+
+  .scenario-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .data-box {
+    background: #f0f4ff;
+    border: 1px solid #c8d5f5;
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+
+  .data-box h4 { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--blue); margin-bottom: 8px; }
+  .data-box p { font-size: 0.82rem; color: #333; line-height: 1.5; }
+  .data-box strong { color: var(--ink); }
+
+  /* Invoice form */
+  .invoice-form {
+    background: white;
+    border: 2px solid var(--grid);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .invoice-header-bar {
+    background: var(--ink);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .invoice-header-bar h2 { font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .invoice-header-bar .mono { font-size: 0.75rem; color: var(--accent); }
+
+  .invoice-body { padding: 24px; }
+
+  /* Form sections */
+  .form-section {
+    margin-bottom: 24px;
+  }
+
+  .form-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    border-bottom: 2px solid var(--blue);
+    padding-bottom: 6px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label { font-size: 0.72rem; font-weight: 600; color: #555; }
+
+  .field-group input, .field-group select {
+    padding: 9px 12px;
+    border: 1.5px solid var(--grid);
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    color: var(--ink);
+    background: #fafaf8;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    width: 100%;
+  }
+
+  .field-group input:focus, .field-group select:focus {
+    outline: none;
+    border-color: var(--blue-light);
+    box-shadow: 0 0 0 3px rgba(45, 85, 201, 0.12);
+    background: white;
+  }
+
+  .field-group input.error { border-color: var(--red); background: #fff5f5; }
+  .field-group input.success { border-color: var(--green); background: #f0fdf4; }
+
+  /* Items table */
+  .items-table { width: 100%; border-collapse: collapse; }
+  .items-table th {
+    background: var(--ink);
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .items-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--grid);
+    vertical-align: top;
+  }
+
+  .items-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--grid);
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    background: #fafaf8;
+    transition: border-color 0.15s;
+  }
+
+  .items-table input:focus {
+    outline: none;
+    border-color: var(--blue-light);
+    background: white;
+  }
+
+  .items-table .col-desc { width: 40%; }
+  .items-table .col-qty { width: 10%; }
+  .items-table .col-price { width: 18%; }
+  .items-table .col-total { width: 18%; background: #f0f4ff; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 0.85rem; color: var(--blue); padding: 8px 12px; border: 1.5px solid #c8d5f5; border-radius: 4px; }
+
+  /* Totals section */
+  .totals-section {
+    background: #f8f7f4;
+    border: 1.5px solid var(--grid);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--grid);
+  }
+
+  .totals-row:last-child { border-bottom: none; }
+  .totals-row label { font-size: 0.82rem; font-weight: 600; color: #444; }
+
+  .totals-row input {
+    width: 160px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--grid);
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: right;
+    background: white;
+    color: var(--ink);
+  }
+
+  .totals-row input:focus {
+    outline: none;
+    border-color: var(--blue-light);
+    box-shadow: 0 0 0 3px rgba(45, 85, 201, 0.12);
+  }
+
+  .totals-row.total-final {
+    background: var(--blue);
+  }
+
+  .totals-row.total-final label { color: white; font-size: 0.9rem; }
+  .totals-row.total-final input {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    color: white;
+    font-size: 1rem;
+  }
+
+  /* Action buttons */
+  .action-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    align-items: center;
+  }
+
+  .btn-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 13px 24px;
+    border-radius: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-check:hover { background: var(--blue-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,58,143,0.35); }
+
+  .btn-reset {
+    background: none;
+    border: 2px solid var(--grid);
+    color: #666;
+    padding: 11px 20px;
+    border-radius: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-reset:hover { border-color: #999; color: #333; }
+
+  /* Feedback panel */
+  .feedback-panel {
+    margin-top: 20px;
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .feedback-panel.visible { display: block; animation: slideDown 0.3s ease; }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .feedback-header.error { background: #fef2f2; border: 2px solid #fca5a5; color: var(--red); border-bottom: none; }
+  .feedback-header.success { background: #f0fdf4; border: 2px solid #86efac; color: var(--green); border-bottom: none; }
+
+  .feedback-items {
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feedback-items.error { background: #fff5f5; border: 2px solid #fca5a5; border-top: none; }
+  .feedback-items.success { background: #f0fdf4; border: 2px solid #86efac; border-top: none; }
+
+  .feedback-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .feedback-item .icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* XML animation overlay */
+  .xml-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 14, 26, 0.9);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .xml-overlay.visible { display: flex; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .xml-window {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    width: 620px;
+    max-width: 95vw;
+    overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.7);
+  }
+
+  .xml-titlebar {
+    background: #161b22;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #30363d;
+  }
+
+  .xml-titlebar .dots { display: flex; gap: 6px; }
+  .xml-titlebar .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .xml-titlebar .dot-r { background: #ff5f57; }
+  .xml-titlebar .dot-y { background: #febc2e; }
+  .xml-titlebar .dot-g { background: #28c840; }
+  .xml-titlebar span { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: #8b949e; margin-left: 8px; }
+
+  .xml-content {
+    padding: 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: #e6edf3;
+    min-height: 280px;
+    overflow: auto;
+    max-height: 360px;
+  }
+
+  .xml-tag { color: #7ee787; }
+  .xml-attr { color: #79c0ff; }
+  .xml-val { color: #a5d6ff; }
+  .xml-comment { color: #8b949e; font-style: italic; }
+
+  .xml-progress {
+    padding: 16px 20px;
+    border-top: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-label { font-size: 0.75rem; color: #8b949e; font-family: 'IBM Plex Mono', monospace; }
+
+  .progress-bar-wrap {
+    height: 4px;
+    background: #30363d;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #2d55c9);
+    border-radius: 2px;
+    transition: width 0.2s ease;
+  }
+
+  .xml-success-badge {
+    background: linear-gradient(135deg, var(--green), #22c55e);
+    color: white;
+    padding: 20px 32px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(26,122,74,0.4);
+  }
+
+  .xml-success-badge h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+  .xml-success-badge p { font-size: 0.875rem; opacity: 0.9; }
+
+  .btn-close-xml {
+    background: white;
+    color: var(--ink);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 5px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: none;
+    transition: all 0.15s;
+  }
+
+  .btn-close-xml:hover { background: var(--accent); }
+  .btn-close-xml.visible { display: block; }
+
+  /* Progress badge */
+  .scenario-progress {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .progress-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: background 0.3s;
+  }
+
+  .progress-dot.done { background: var(--accent); }
+
+  /* Tooltip */
+  .tooltip-wrap { position: relative; display: inline-flex; align-items: center; margin-left: 4px; }
+  .tooltip-icon { cursor: help; font-size: 0.75rem; background: var(--blue); color: white; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+  .tooltip-text {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: white;
+    font-size: 0.72rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .tooltip-wrap:hover .tooltip-text { display: block; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .form-grid, .form-grid-3, .scenario-data-grid { grid-template-columns: 1fr; }
+    .header-logo { clip-path: none; padding-right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="40" height="40" rx="6" fill="#0a0e1a"/>
+        <path d="M8 12h16M8 20h24M8 28h12" stroke="#e8a020" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="30" cy="12" r="5" fill="#1a3a8f" stroke="#e8a020" stroke-width="2"/>
+        <path d="M28 12l1.5 1.5L33 10" stroke="#e8a020" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>PEPPOL</span>
+    </div>
+    <div class="header-info">
+      <h1>De Digitale Factuur — Oefenomgeving</h1>
+      <p>Leer facturen opmaken en ontdek hoe Peppol/UBL-XML werkt</p>
+    </div>
+    <div class="scenario-progress" style="padding: 0 24px;">
+      <div class="progress-dot" id="dot0"></div>
+      <div class="progress-dot" id="dot1"></div>
+      <div class="progress-dot" id="dot2"></div>
+      <span style="font-size:0.72rem; color:rgba(255,255,255,0.5); margin-left:8px; font-family:'IBM Plex Mono',monospace;">VOORTGANG</span>
+    </div>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">
+    <span class="scenario-num">1</span> GSM Aankoop
+  </button>
+  <button class="tab-btn" onclick="switchTab(1)">
+    <span class="scenario-num">2</span> Auto Onderhoud
+  </button>
+  <button class="tab-btn" onclick="switchTab(2)">
+    <span class="scenario-num">3</span> Badkamer
+  </button>
+</div>
+
+<div class="main-wrap">
+
+  <!-- ==================== SCENARIO 1 ==================== -->
+  <div id="tab-0" class="tab-content">
+    <div class="scenario-card">
+      <div class="scenario-tag">📱 Scenario 1 — GSM Aankoop</div>
+      <div class="scenario-title">Klant koopt een nieuwe smartphone en accessoires</div>
+      <div class="scenario-text">
+        <strong>Situatie:</strong> Thomas Declercq komt naar jouw telefoonwinkel <em>TechShop BV</em>. Hij koopt een iPhone 15 voor <strong>€ 799,00</strong> en een beschermhoes voor <strong>€ 39,00</strong>. Omdat Thomas een vaste klant is, geef je hem een korting van <strong>10%</strong> op het totaalbedrag. Alle producten zijn inclusief 21% BTW berekening (excl. BTW prijzen zijn opgegeven). Maak vandaag een correcte factuur op met factuurnummer <strong>2025-001</strong>.
+      </div>
+      <div class="scenario-data-grid">
+        <div class="data-box">
+          <h4>📤 Verkoper</h4>
+          <p><strong>TechShop BV</strong><br>Nieuwstraat 45, 1000 Brussel<br>BTW: BE 0123.456.789<br>IBAN: BE68 5390 0754 7034</p>
+        </div>
+        <div class="data-box">
+          <h4>📥 Koper</h4>
+          <p><strong>Thomas Declercq</strong><br>Kerkstraat 12, 9000 Gent<br>BTW: BE 0987.654.321</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoice Form -->
+    <div class="invoice-form">
+      <div class="invoice-header-bar">
+        <h2>📄 Factuur Invullen</h2>
+        <span class="mono">SCENARIO 01 / TECHSHOP BV</span>
+      </div>
+      <div class="invoice-body">
+
+        <!-- Partijen -->
+        <div class="form-section">
+          <div class="form-section-title">
+            🏢 Gegevens Verkoper & Koper
+          </div>
+          <div class="form-grid">
+            <div class="field-group">
+              <label>Naam Verkoper</label>
+              <input type="text" id="s0_seller_name" placeholder="bijv. TechShop BV">
+            </div>
+            <div class="field-group">
+              <label>Naam Koper</label>
+              <input type="text" id="s0_buyer_name" placeholder="bijv. Thomas Declercq">
+            </div>
+            <div class="field-group">
+              <label>Adres Verkoper</label>
+              <input type="text" id="s0_seller_addr" placeholder="Straat, Gemeente">
+            </div>
+            <div class="field-group">
+              <label>Adres Koper</label>
+              <input type="text" id="s0_buyer_addr" placeholder="Straat, Gemeente">
+            </div>
+            <div class="field-group">
+              <label>BTW-nummer Verkoper</label>
+              <input type="text" id="s0_seller_btw" placeholder="BE 0123.456.789">
+            </div>
+            <div class="field-group">
+              <label>BTW-nummer Koper</label>
+              <input type="text" id="s0_buyer_btw" placeholder="BE 0987.654.321">
+            </div>
+          </div>
+        </div>
+
+        <!-- Factuurinfo -->
+        <div class="form-section">
+          <div class="form-section-title">📋 Factuurgegevens</div>
+          <div class="form-grid-3">
+            <div class="field-group">
+              <label>Factuurnummer</label>
+              <input type="text" id="s0_facnr" placeholder="bijv. 2025-001">
+            </div>
+            <div class="field-group">
+              <label>Factuurdatum</label>
+              <input type="date" id="s0_facdate">
+            </div>
+            <div class="field-group">
+              <label>Vervaldatum</label>
+              <input type="date" id="s0_duedate">
+            </div>
+          </div>
+        </div>
+
+        <!-- Artikelen -->
+        <div class="form-section">
+          <div class="form-section-title">📦 Artikelen & Diensten</div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-desc">Omschrijving</th>
+                <th class="col-qty">Aantal</th>
+                <th class="col-price">Eenheidsprijs (€)</th>
+                <th>Totaal (€)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" id="s0_d1" placeholder="Artikel omschrijving..."></td>
+                <td><input type="number" id="s0_q1" placeholder="1" min="0" oninput="calcLine(0,1)"></td>
+                <td><input type="number" id="s0_p1" placeholder="0.00" step="0.01" oninput="calcLine(0,1)"></td>
+                <td><div class="col-total" id="s0_t1">—</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" id="s0_d2" placeholder="Artikel omschrijving..."></td>
+                <td><input type="number" id="s0_q2" placeholder="1" min="0" oninput="calcLine(0,2)"></td>
+                <td><input type="number" id="s0_p2" placeholder="0.00" step="0.01" oninput="calcLine(0,2)"></td>
+                <td><div class="col-total" id="s0_t2">—</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totalen -->
+        <div class="form-section">
+          <div class="form-section-title">
+            🧮 Berekeningen
+            <div class="tooltip-wrap">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-text">Maatstaf van Heffing = Subtotaal MINUS korting</span>
+            </div>
+          </div>
+          <div class="totals-section">
+            <div class="totals-row">
+              <label>Subtotaal excl. BTW (€)</label>
+              <input type="number" id="s0_subtotal" placeholder="0.00" step="0.01">
+            </div>
+            <div class="totals-row">
+              <label>Korting 10% (€)</label>
+              <input type="number" id="s0_korting" placeholder="0.00" step="0.01">
+            </div>
+            <div class="totals-row" style="background:#eef2ff;">
+              <label><strong>Maatstaf van Heffing (€)</strong> <span style="font-weight:400;color:#666;font-size:0.78rem;">← subtotaal na korting</span></label>
+              <input type="number" id="s0_maatstaf" placeholder="0.00" step="0.01">
+            </div>
+            <div class="totals-row">
+              <label>BTW-bedrag 21% (€)</label>
+              <input type="number" id="s0_btw" placeholder="0.00" step="0.01">
+            </div>
+            <div class="totals-row total-final">
+              <label>Totaal te betalen (€)</label>
+              <input type="number" id="s0_totaal" placeholder="0.00" step="0.01">
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="action-bar">
+          <button class="btn-check" onclick="checkInvoice(0)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Factuur Controleren
+          </button>
+          <button class="btn-reset" onclick="resetForm(0)">↺ Opnieuw beginnen</button>
+        </div>
+
+        <!-- Feedback -->
+        <div class="feedback-panel" id="s0_feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENARIO 2 ==================== -->
+  <div id="tab-1" class="tab-content" style="display:none;">
+    <div class="scenario-card">
+      <div class="scenario-tag">🚗 Scenario 2 — Auto Onderhoud</div>
+      <div class="scenario-title">Garage voert groot onderhoud uit op voertuig</div>
+      <div class="scenario-text">
+        <strong>Situatie:</strong> Leila Maes brengt haar wagen naar <em>Garage Vandenberghe & Zonen BV</em> voor groot onderhoud. De garage voert de volgende werken uit: <strong>Olieverversing (2 stuks à € 45,00)</strong>, vervanging <strong>Remschijven voor (€ 180,00)</strong> en <strong>Arbeidsloon (3 uur à € 75,00)</strong>. Leila krijgt een <strong>korting van 5%</strong> omdat ze een vaste klant is. Maak de factuur op met nummer <strong>2025-018</strong> van vandaag.
+      </div>
+      <div class="scenario-data-grid">
+        <div class="data-box">
+          <h4>📤 Verkoper</h4>
+          <p><strong>Garage Vandenberghe & Zonen BV</strong><br>Industrielaan 78, 2000 Antwerpen<br>BTW: BE 0456.789.123<br>IBAN: BE45 7330 9847 1234</p>
+        </div>
+        <div class="data-box">
+          <h4>📥 Koper</h4>
+          <p><strong>Leila Maes</strong><br>Dorpsstraat 5, 3000 Leuven<br>Rijksregisternummer: klant #4421</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-form">
+      <div class="invoice-header-bar">
+        <h2>📄 Factuur Invullen</h2>
+        <span class="mono">SCENARIO 02 / GARAGE VANDENBERGHE</span>
+      </div>
+      <div class="invoice-body">
+        <div class="form-section">
+          <div class="form-section-title">🏢 Gegevens Verkoper & Koper</div>
+          <div class="form-grid">
+            <div class="field-group"><label>Naam Verkoper</label><input type="text" id="s1_seller_name" placeholder="Garagenaam"></div>
+            <div class="field-group"><label>Naam Koper</label><input type="text" id="s1_buyer_name" placeholder="Naam klant"></div>
+            <div class="field-group"><label>Adres Verkoper</label><input type="text" id="s1_seller_addr" placeholder="Straat, Gemeente"></div>
+            <div class="field-group"><label>Adres Koper</label><input type="text" id="s1_buyer_addr" placeholder="Straat, Gemeente"></div>
+            <div class="field-group"><label>BTW-nummer Verkoper</label><input type="text" id="s1_seller_btw" placeholder="BE 0456.789.123"></div>
+            <div class="field-group"><label>Klantennummer / BTW</label><input type="text" id="s1_buyer_btw" placeholder="Klant #4421"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📋 Factuurgegevens</div>
+          <div class="form-grid-3">
+            <div class="field-group"><label>Factuurnummer</label><input type="text" id="s1_facnr" placeholder="bijv. 2025-018"></div>
+            <div class="field-group"><label>Factuurdatum</label><input type="date" id="s1_facdate"></div>
+            <div class="field-group"><label>Vervaldatum</label><input type="date" id="s1_duedate"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📦 Artikelen & Diensten</div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-desc">Omschrijving</th>
+                <th class="col-qty">Aantal</th>
+                <th class="col-price">Eenheidsprijs (€)</th>
+                <th>Totaal (€)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" id="s1_d1" placeholder="bijv. Olieverversing"></td>
+                <td><input type="number" id="s1_q1" placeholder="1" min="0" oninput="calcLine(1,1)"></td>
+                <td><input type="number" id="s1_p1" placeholder="0.00" step="0.01" oninput="calcLine(1,1)"></td>
+                <td><div class="col-total" id="s1_t1">—</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" id="s1_d2" placeholder="bijv. Remschijven voor"></td>
+                <td><input type="number" id="s1_q2" placeholder="1" min="0" oninput="calcLine(1,2)"></td>
+                <td><input type="number" id="s1_p2" placeholder="0.00" step="0.01" oninput="calcLine(1,2)"></td>
+                <td><div class="col-total" id="s1_t2">—</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" id="s1_d3" placeholder="bijv. Arbeidsloon"></td>
+                <td><input type="number" id="s1_q3" placeholder="1" min="0" oninput="calcLine(1,3)"></td>
+                <td><input type="number" id="s1_p3" placeholder="0.00" step="0.01" oninput="calcLine(1,3)"></td>
+                <td><div class="col-total" id="s1_t3">—</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🧮 Berekeningen<div class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-text">Maatstaf van Heffing = Subtotaal MINUS korting</span></div></div>
+          <div class="totals-section">
+            <div class="totals-row"><label>Subtotaal excl. BTW (€)</label><input type="number" id="s1_subtotal" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row"><label>Korting 5% (€)</label><input type="number" id="s1_korting" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row" style="background:#eef2ff;"><label><strong>Maatstaf van Heffing (€)</strong> <span style="font-weight:400;color:#666;font-size:0.78rem;">← subtotaal na korting</span></label><input type="number" id="s1_maatstaf" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row"><label>BTW-bedrag 21% (€)</label><input type="number" id="s1_btw" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row total-final"><label>Totaal te betalen (€)</label><input type="number" id="s1_totaal" placeholder="0.00" step="0.01"></div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn-check" onclick="checkInvoice(1)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Factuur Controleren
+          </button>
+          <button class="btn-reset" onclick="resetForm(1)">↺ Opnieuw beginnen</button>
+        </div>
+        <div class="feedback-panel" id="s1_feedback"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SCENARIO 3 ==================== -->
+  <div id="tab-2" class="tab-content" style="display:none;">
+    <div class="scenario-card">
+      <div class="scenario-tag">🛁 Scenario 3 — Badkamer Plaatsing</div>
+      <div class="scenario-title">Installateur plaatst een volledige nieuwe badkamer</div>
+      <div class="scenario-text">
+        <strong>Situatie:</strong> Bouwbedrijf <em>Renovations Plus NV</em> heeft een volledige badkamer geplaatst bij het gezin Pieters. De werken omvatten: <strong>Sanitair materiaal (€ 1 850,00)</strong>, <strong>Tegels & plaatsing (€ 920,00)</strong>, en <strong>Loodgieterswerk (8 uur à € 95,00)</strong>. Het gezin Pieters ontvangt een <strong>korting van 8%</strong> omdat ze ook de keuken laten renoveren door hetzelfde bedrijf. Maak factuur <strong>2025-047</strong> op van vandaag.
+      </div>
+      <div class="scenario-data-grid">
+        <div class="data-box">
+          <h4>📤 Verkoper</h4>
+          <p><strong>Renovations Plus NV</strong><br>Bouwlaan 112, 8000 Brugge<br>BTW: BE 0789.012.345<br>IBAN: BE71 3100 9537 5191</p>
+        </div>
+        <div class="data-box">
+          <h4>📥 Koper</h4>
+          <p><strong>Familie Pieters</strong><br>Zonnebloemstraat 33, 9000 Gent<br>BTW: particuliere klant</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-form">
+      <div class="invoice-header-bar">
+        <h2>📄 Factuur Invullen</h2>
+        <span class="mono">SCENARIO 03 / RENOVATIONS PLUS NV</span>
+      </div>
+      <div class="invoice-body">
+        <div class="form-section">
+          <div class="form-section-title">🏢 Gegevens Verkoper & Koper</div>
+          <div class="form-grid">
+            <div class="field-group"><label>Naam Verkoper</label><input type="text" id="s2_seller_name" placeholder="Bedrijfsnaam"></div>
+            <div class="field-group"><label>Naam Koper</label><input type="text" id="s2_buyer_name" placeholder="Naam gezin/klant"></div>
+            <div class="field-group"><label>Adres Verkoper</label><input type="text" id="s2_seller_addr" placeholder="Straat, Gemeente"></div>
+            <div class="field-group"><label>Adres Koper</label><input type="text" id="s2_buyer_addr" placeholder="Straat, Gemeente"></div>
+            <div class="field-group"><label>BTW-nummer Verkoper</label><input type="text" id="s2_seller_btw" placeholder="BE 0789.012.345"></div>
+            <div class="field-group"><label>Klanttype / BTW</label><input type="text" id="s2_buyer_btw" placeholder="bijv. Particuliere klant"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📋 Factuurgegevens</div>
+          <div class="form-grid-3">
+            <div class="field-group"><label>Factuurnummer</label><input type="text" id="s2_facnr" placeholder="bijv. 2025-047"></div>
+            <div class="field-group"><label>Factuurdatum</label><input type="date" id="s2_facdate"></div>
+            <div class="field-group"><label>Vervaldatum</label><input type="date" id="s2_duedate"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">📦 Artikelen & Diensten</div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th class="col-desc">Omschrijving</th>
+                <th class="col-qty">Aantal</th>
+                <th class="col-price">Eenheidsprijs (€)</th>
+                <th>Totaal (€)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="text" id="s2_d1" placeholder="bijv. Sanitair materiaal"></td>
+                <td><input type="number" id="s2_q1" placeholder="1" min="0" oninput="calcLine(2,1)"></td>
+                <td><input type="number" id="s2_p1" placeholder="0.00" step="0.01" oninput="calcLine(2,1)"></td>
+                <td><div class="col-total" id="s2_t1">—</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" id="s2_d2" placeholder="bijv. Tegels & plaatsing"></td>
+                <td><input type="number" id="s2_q2" placeholder="1" min="0" oninput="calcLine(2,2)"></td>
+                <td><input type="number" id="s2_p2" placeholder="0.00" step="0.01" oninput="calcLine(2,2)"></td>
+                <td><div class="col-total" id="s2_t2">—</div></td>
+              </tr>
+              <tr>
+                <td><input type="text" id="s2_d3" placeholder="bijv. Loodgieterswerk"></td>
+                <td><input type="number" id="s2_q3" placeholder="1" min="0" oninput="calcLine(2,3)"></td>
+                <td><input type="number" id="s2_p3" placeholder="0.00" step="0.01" oninput="calcLine(2,3)"></td>
+                <td><div class="col-total" id="s2_t3">—</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🧮 Berekeningen<div class="tooltip-wrap"><span class="tooltip-icon">?</span><span class="tooltip-text">Maatstaf van Heffing = Subtotaal MINUS korting</span></div></div>
+          <div class="totals-section">
+            <div class="totals-row"><label>Subtotaal excl. BTW (€)</label><input type="number" id="s2_subtotal" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row"><label>Korting 8% (€)</label><input type="number" id="s2_korting" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row" style="background:#eef2ff;"><label><strong>Maatstaf van Heffing (€)</strong> <span style="font-weight:400;color:#666;font-size:0.78rem;">← subtotaal na korting</span></label><input type="number" id="s2_maatstaf" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row"><label>BTW-bedrag 21% (€)</label><input type="number" id="s2_btw" placeholder="0.00" step="0.01"></div>
+            <div class="totals-row total-final"><label>Totaal te betalen (€)</label><input type="number" id="s2_totaal" placeholder="0.00" step="0.01"></div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn-check" onclick="checkInvoice(2)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Factuur Controleren
+          </button>
+          <button class="btn-reset" onclick="resetForm(2)">↺ Opnieuw beginnen</button>
+        </div>
+        <div class="feedback-panel" id="s2_feedback"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-wrap -->
+
+<!-- XML Overlay -->
+<div class="xml-overlay" id="xmlOverlay">
+  <div class="xml-window">
+    <div class="xml-titlebar">
+      <div class="dots">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+      </div>
+      <span>peppol-ubl-export.xml — Conversieprocces actief</span>
+    </div>
+    <div class="xml-content" id="xmlContent"></div>
+    <div class="xml-progress">
+      <div class="progress-label mono" id="xmlProgressLabel">Initialiseren...</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="xmlProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+  <div class="xml-success-badge" id="xmlSuccessBadge" style="display:none;">
+    <h3>✅ Peppol UBL/XML Aangemaakt!</h3>
+    <p>Jouw factuur is succesvol omgezet naar een gestructureerd elektronisch formaat.<br>Dit bestand kan nu verzonden worden via het Peppol-netwerk.</p>
+  </div>
+  <button class="btn-close-xml" id="xmlCloseBtn" onclick="closeXml()">Sluiten</button>
+</div>
+
+<script>
+// ─── Scenario data ───────────────────────────────────────────────
+const scenarios = [
+  {
+    korting_pct: 0.10,
+    items: [
+      { qty: 1, price: 799.00 },
+      { qty: 1, price: 39.00 }
+    ],
+    facnr: '2025-001',
+    seller: 'TechShop BV',
+    buyer: 'Thomas Declercq'
+  },
+  {
+    korting_pct: 0.05,
+    items: [
+      { qty: 2, price: 45.00 },
+      { qty: 1, price: 180.00 },
+      { qty: 3, price: 75.00 }
+    ],
+    facnr: '2025-018',
+    seller: 'Garage Vandenberghe & Zonen BV',
+    buyer: 'Leila Maes'
+  },
+  {
+    korting_pct: 0.08,
+    items: [
+      { qty: 1, price: 1850.00 },
+      { qty: 1, price: 920.00 },
+      { qty: 8, price: 95.00 }
+    ],
+    facnr: '2025-047',
+    seller: 'Renovations Plus NV',
+    buyer: 'Familie Pieters'
+  }
+];
+
+const completed = [false, false, false];
+
+// ─── Tab switching ────────────────────────────────────────────────
+function switchTab(idx) {
+  document.querySelectorAll('.tab-content').forEach((el,i) => {
+    el.style.display = i === idx ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+}
+
+// ─── Line calculation ─────────────────────────────────────────────
+function calcLine(s, line) {
+  const q = parseFloat(document.getElementById(`s${s}_q${line}`)?.value) || 0;
+  const p = parseFloat(document.getElementById(`s${s}_p${line}`)?.value) || 0;
+  const total = q * p;
+  const el = document.getElementById(`s${s}_t${line}`);
+  if (el) el.textContent = total > 0 ? '€ ' + total.toFixed(2) : '—';
+}
+
+// ─── Round helper ─────────────────────────────────────────────────
+function r2(n) { return Math.round(n * 100) / 100; }
+
+// ─── Validation ───────────────────────────────────────────────────
+function checkInvoice(s) {
+  const sc = scenarios[s];
+  const errors = [];
+  const warnings = [];
+
+  // 1. Check required text fields
+  const sellerName = document.getElementById(`s${s}_seller_name`).value.trim();
+  const buyerName  = document.getElementById(`s${s}_buyer_name`).value.trim();
+  const sellerAddr = document.getElementById(`s${s}_seller_addr`).value.trim();
+  const buyerAddr  = document.getElementById(`s${s}_buyer_addr`).value.trim();
+  const sellerBtw  = document.getElementById(`s${s}_seller_btw`).value.trim();
+  const facnr      = document.getElementById(`s${s}_facnr`).value.trim();
+  const facdate    = document.getElementById(`s${s}_facdate`).value;
+
+  if (!sellerName) errors.push({ field: `s${s}_seller_name`, msg: 'De naam van de verkoper ontbreekt. Vul de bedrijfsnaam in.' });
+  if (!buyerName)  errors.push({ field: `s${s}_buyer_name`,  msg: 'De naam van de koper ontbreekt. Wie is de klant?' });
+  if (!sellerAddr) errors.push({ field: `s${s}_seller_addr`, msg: 'Het adres van de verkoper ontbreekt.' });
+  if (!buyerAddr)  errors.push({ field: `s${s}_buyer_addr`,  msg: 'Het adres van de koper ontbreekt.' });
+  if (!sellerBtw)  errors.push({ field: `s${s}_seller_btw`,  msg: 'Het BTW-nummer van de verkoper is verplicht op een factuur.' });
+  if (!facnr)      errors.push({ field: `s${s}_facnr`,       msg: 'Een factuurnummer is verplicht. Gebruik het nummer uit het scenario.' });
+  if (!facdate)    errors.push({ field: `s${s}_facdate`,      msg: 'Vergeet de factuurdatum niet in te vullen.' });
+
+  // Check correct facnr
+  if (facnr && facnr !== sc.facnr) {
+    errors.push({ field: `s${s}_facnr`, msg: `Het factuurnummer klopt niet. Het scenario vraagt om "${sc.facnr}".` });
+  }
+
+  // 2. Calculate correct values
+  let correctSubtotal = 0;
+  sc.items.forEach((item, i) => {
+    correctSubtotal = r2(correctSubtotal + r2(item.qty * item.price));
+  });
+  const correctKorting  = r2(correctSubtotal * sc.korting_pct);
+  const correctMaatstaf = r2(correctSubtotal - correctKorting);
+  const correctBtw      = r2(correctMaatstaf * 0.21);
+  const correctTotaal   = r2(correctMaatstaf + correctBtw);
+
+  // 3. Get user values
+  const userSubtotal = parseFloat(document.getElementById(`s${s}_subtotal`).value) || 0;
+  const userKorting  = parseFloat(document.getElementById(`s${s}_korting`).value) || 0;
+  const userMaatstaf = parseFloat(document.getElementById(`s${s}_maatstaf`).value) || 0;
+  const userBtw      = parseFloat(document.getElementById(`s${s}_btw`).value) || 0;
+  const userTotaal   = parseFloat(document.getElementById(`s${s}_totaal`).value) || 0;
+
+  const eps = 0.02; // 2 cent tolerance
+
+  if (Math.abs(userSubtotal - correctSubtotal) > eps) {
+    if (userSubtotal === 0) {
+      errors.push({ field: `s${s}_subtotal`, msg: `Het subtotaal excl. BTW is leeg. Tel alle artikelbedragen op: het is € ${correctSubtotal.toFixed(2)}.` });
+    } else {
+      errors.push({ field: `s${s}_subtotal`, msg: `Het subtotaal excl. BTW klopt niet. Controleer of je alle artikelen correct hebt opgeteld. Verwacht: € ${correctSubtotal.toFixed(2)}.` });
+    }
+  }
+
+  if (Math.abs(userKorting - correctKorting) > eps) {
+    const pct = Math.round(sc.korting_pct * 100);
+    if (userKorting === 0) {
+      errors.push({ field: `s${s}_korting`, msg: `Je bent de korting vergeten! Het scenario geeft ${pct}% korting op het subtotaal (= € ${correctKorting.toFixed(2)}).` });
+    } else {
+      errors.push({ field: `s${s}_korting`, msg: `De korting klopt niet. ${pct}% van € ${correctSubtotal.toFixed(2)} = € ${correctKorting.toFixed(2)}.` });
+    }
+  }
+
+  if (Math.abs(userMaatstaf - correctMaatstaf) > eps) {
+    if (Math.abs(userMaatstaf - correctSubtotal) < eps) {
+      errors.push({ field: `s${s}_maatstaf`, msg: `Je bent de korting vergeten af te trekken van de Maatstaf van Heffing! Maatstaf = Subtotaal − Korting = € ${correctSubtotal.toFixed(2)} − € ${correctKorting.toFixed(2)} = € ${correctMaatstaf.toFixed(2)}.` });
+    } else if (userMaatstaf === 0) {
+      errors.push({ field: `s${s}_maatstaf`, msg: `De Maatstaf van Heffing is leeg. Dit is het bedrag waarop BTW berekend wordt: Subtotaal − Korting = € ${correctMaatstaf.toFixed(2)}.` });
+    } else {
+      errors.push({ field: `s${s}_maatstaf`, msg: `De Maatstaf van Heffing klopt niet. Trek de korting af van het subtotaal: € ${correctSubtotal.toFixed(2)} − € ${correctKorting.toFixed(2)} = € ${correctMaatstaf.toFixed(2)}.` });
+    }
+  }
+
+  if (Math.abs(userBtw - correctBtw) > eps) {
+    if (Math.abs(userBtw - r2(correctSubtotal * 0.21)) < eps) {
+      errors.push({ field: `s${s}_btw`, msg: `Je berekende BTW op het subtotaal, maar BTW moet berekend worden op de Maatstaf van Heffing (= subtotaal na korting). 21% × € ${correctMaatstaf.toFixed(2)} = € ${correctBtw.toFixed(2)}.` });
+    } else if (userBtw === 0) {
+      errors.push({ field: `s${s}_btw`, msg: `Het BTW-bedrag is leeg. Bereken 21% op de Maatstaf van Heffing: € ${correctBtw.toFixed(2)}.` });
+    } else {
+      errors.push({ field: `s${s}_btw`, msg: `Het BTW-bedrag (21%) klopt niet. Bereken: 21% × € ${correctMaatstaf.toFixed(2)} = € ${correctBtw.toFixed(2)}.` });
+    }
+  }
+
+  if (Math.abs(userTotaal - correctTotaal) > eps) {
+    if (userTotaal === 0) {
+      errors.push({ field: `s${s}_totaal`, msg: `Het totaal te betalen is leeg. Maatstaf + BTW = € ${correctMaatstaf.toFixed(2)} + € ${correctBtw.toFixed(2)} = € ${correctTotaal.toFixed(2)}.` });
+    } else {
+      errors.push({ field: `s${s}_totaal`, msg: `Het totaal te betalen klopt niet. Maatstaf van Heffing + BTW-bedrag = € ${correctMaatstaf.toFixed(2)} + € ${correctBtw.toFixed(2)} = € ${correctTotaal.toFixed(2)}.` });
+    }
+  }
+
+  // Show feedback
+  showFeedback(s, errors, correctSubtotal, correctKorting, correctMaatstaf, correctBtw, correctTotaal, sc);
+}
+
+function showFeedback(s, errors, sub, kor, maatst, btw, totaal, sc) {
+  const panel = document.getElementById(`s${s}_feedback`);
+
+  // Reset field styles
+  document.querySelectorAll(`#tab-${s} input`).forEach(i => {
+    i.classList.remove('error','success');
+  });
+
+  if (errors.length === 0) {
+    // SUCCESS
+    panel.innerHTML = `
+      <div class="feedback-header success">
+        <span>✅</span> Uitstekend! Alle berekeningen zijn correct!
+      </div>
+      <div class="feedback-items success">
+        <div class="feedback-item">
+          <span class="icon">✔</span>
+          <span>Subtotaal excl. BTW: <strong>€ ${sub.toFixed(2)}</strong> — correct!</span>
+        </div>
+        <div class="feedback-item">
+          <span class="icon">✔</span>
+          <span>Korting (${Math.round(sc.korting_pct*100)}%): <strong>€ ${kor.toFixed(2)}</strong> — correct!</span>
+        </div>
+        <div class="feedback-item">
+          <span class="icon">✔</span>
+          <span>Maatstaf van Heffing: <strong>€ ${maatst.toFixed(2)}</strong> — correct!</span>
+        </div>
+        <div class="feedback-item">
+          <span class="icon">✔</span>
+          <span>BTW-bedrag 21%: <strong>€ ${btw.toFixed(2)}</strong> — correct!</span>
+        </div>
+        <div class="feedback-item">
+          <span class="icon">✔</span>
+          <span>Totaal te betalen: <strong>€ ${totaal.toFixed(2)}</strong> — correct!</span>
+        </div>
+        <div class="feedback-item" style="margin-top:6px; padding-top:10px; border-top:1px solid #86efac;">
+          <span class="icon">🚀</span>
+          <span>Jouw factuur wordt nu omgezet naar <strong>Peppol UBL/XML-formaat</strong>...</span>
+        </div>
+      </div>`;
+    panel.className = 'feedback-panel visible';
+    completed[s] = true;
+    updateProgress();
+
+    setTimeout(() => showXmlAnimation(s, sub, kor, maatst, btw, totaal, sc), 800);
+  } else {
+    // ERRORS
+    errors.forEach(e => {
+      const el = document.getElementById(e.field);
+      if (el) el.classList.add('error');
+    });
+
+    const items = errors.map(e => `
+      <div class="feedback-item">
+        <span class="icon">⚠️</span>
+        <span>${e.msg}</span>
+      </div>`).join('');
+
+    panel.innerHTML = `
+      <div class="feedback-header error">
+        <span>❌</span> Er zijn ${errors.length} punt${errors.length > 1 ? 'en' : ''} die aandacht vragen:
+      </div>
+      <div class="feedback-items error">${items}</div>`;
+    panel.className = 'feedback-panel visible';
+  }
+}
+
+function updateProgress() {
+  completed.forEach((done, i) => {
+    document.getElementById(`dot${i}`).classList.toggle('done', done);
+  });
+}
+
+// ─── XML animation ────────────────────────────────────────────────
+function showXmlAnimation(s, sub, kor, maatst, btw, totaal, sc) {
+  const overlay = document.getElementById('xmlOverlay');
+  const content = document.getElementById('xmlContent');
+  const progressBar = document.getElementById('xmlProgressBar');
+  const progressLabel = document.getElementById('xmlProgressLabel');
+  const successBadge = document.getElementById('xmlSuccessBadge');
+  const closeBtn = document.getElementById('xmlCloseBtn');
+
+  overlay.classList.add('visible');
+  successBadge.style.display = 'none';
+  closeBtn.classList.remove('visible');
+  progressBar.style.width = '0%';
+  content.innerHTML = '';
+
+  const today = new Date().toISOString().split('T')[0];
+  const lines = [
+    `<span class="xml-comment">&lt;!-- Peppol BIS Billing 3.0 / UBL 2.1 --&gt;</span>`,
+    `<span class="xml-tag">&lt;Invoice&gt;</span>`,
+    `  <span class="xml-tag">&lt;ID&gt;</span><span class="xml-val">${sc.facnr}</span><span class="xml-tag">&lt;/ID&gt;</span>`,
+    `  <span class="xml-tag">&lt;IssueDate&gt;</span><span class="xml-val">${today}</span><span class="xml-tag">&lt;/IssueDate&gt;</span>`,
+    `  <span class="xml-tag">&lt;AccountingSupplierParty&gt;</span>`,
+    `    <span class="xml-tag">&lt;Name&gt;</span><span class="xml-val">${sc.seller}</span><span class="xml-tag">&lt;/Name&gt;</span>`,
+    `  <span class="xml-tag">&lt;/AccountingSupplierParty&gt;</span>`,
+    `  <span class="xml-tag">&lt;AccountingCustomerParty&gt;</span>`,
+    `    <span class="xml-tag">&lt;Name&gt;</span><span class="xml-val">${sc.buyer}</span><span class="xml-tag">&lt;/Name&gt;</span>`,
+    `  <span class="xml-tag">&lt;/AccountingCustomerParty&gt;</span>`,
+    `  <span class="xml-tag">&lt;LegalMonetaryTotal&gt;</span>`,
+    `    <span class="xml-tag">&lt;LineExtensionAmount&gt;</span><span class="xml-val">${sub.toFixed(2)}</span><span class="xml-tag">&lt;/LineExtensionAmount&gt;</span>`,
+    `    <span class="xml-tag">&lt;AllowanceTotalAmount&gt;</span><span class="xml-val">${kor.toFixed(2)}</span><span class="xml-tag">&lt;/AllowanceTotalAmount&gt;</span>`,
+    `    <span class="xml-tag">&lt;TaxExclusiveAmount&gt;</span><span class="xml-val">${maatst.toFixed(2)}</span><span class="xml-tag">&lt;/TaxExclusiveAmount&gt;</span>`,
+    `    <span class="xml-tag">&lt;TaxAmount&gt;</span><span class="xml-val">${btw.toFixed(2)}</span><span class="xml-tag">&lt;/TaxAmount&gt;</span>`,
+    `    <span class="xml-tag">&lt;PayableAmount&gt;</span><span class="xml-val">${totaal.toFixed(2)}</span><span class="xml-tag">&lt;/PayableAmount&gt;</span>`,
+    `  <span class="xml-tag">&lt;/LegalMonetaryTotal&gt;</span>`,
+    `<span class="xml-tag">&lt;/Invoice&gt;</span>`,
+  ];
+
+  const steps = [
+    'Schema valideren...',
+    'Partijgegevens coderen...',
+    'Bedragen omzetten naar XML...',
+    'Digitale handtekening toevoegen...',
+    'Peppol Access Point verbinden...',
+    '✅ Klaar voor verzending!'
+  ];
+
+  let lineIdx = 0;
+  let stepIdx = 0;
+
+  const lineTimer = setInterval(() => {
+    if (lineIdx < lines.length) {
+      content.innerHTML += lines[lineIdx] + '\n';
+      content.scrollTop = content.scrollHeight;
+      lineIdx++;
+
+      const progress = Math.round((lineIdx / lines.length) * 100);
+      progressBar.style.width = progress + '%';
+
+      const stepProgress = Math.floor((lineIdx / lines.length) * steps.length);
+      if (stepProgress !== stepIdx && stepProgress < steps.length) {
+        stepIdx = stepProgress;
+        progressLabel.textContent = steps[stepIdx];
+      }
+    } else {
+      clearInterval(lineTimer);
+      progressBar.style.width = '100%';
+      progressLabel.textContent = steps[steps.length - 1];
+
+      setTimeout(() => {
+        successBadge.style.display = 'block';
+        closeBtn.classList.add('visible');
+      }, 600);
+    }
+  }, 120);
+}
+
+function closeXml() {
+  document.getElementById('xmlOverlay').classList.remove('visible');
+}
+
+function resetForm(s) {
+  const tab = document.getElementById(`tab-${s}`);
+  tab.querySelectorAll('input').forEach(i => {
+    if (i.type === 'date') i.value = '';
+    else if (i.type === 'number') i.value = '';
+    else i.value = '';
+    i.classList.remove('error','success');
+  });
+  // Reset line totals
+  for (let line = 1; line <= 3; line++) {
+    const el = document.getElementById(`s${s}_t${line}`);
+    if (el) el.textContent = '—';
+  }
+  const panel = document.getElementById(`s${s}_feedback`);
+  panel.className = 'feedback-panel';
+  panel.innerHTML = '';
+}
+</script>
+</body>
+</html>
